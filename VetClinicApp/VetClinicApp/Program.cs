@@ -104,41 +104,93 @@ namespace VetClinic
             }
         }
 
-        // Пункт 3 (рівень А): таблиця з двома входами фіксованого розміру
-        // (вид тварини × день тижня) з підсумком кожного рядка
+        // Пункт 3: таблиця з двома входами (вид тварини × день тижня)
+        // з підсумком рядка, підсумком стовпця і загальним підсумком
         static void ShowVisitsTable()
         {
             string[] species = { "Собаки", "Коти", "Птахи", "Гризуни", "Рептилії" };
             string[] days = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд" };
 
+            int rows = ReadCount("Скільки видів показати", species.Length);
+            if (rows < 0)
+            {
+                return;
+            }
+
+            int cols = ReadCount("Скільки днів показати", days.Length);
+            if (cols < 0)
+            {
+                return;
+            }
+
+            Console.WriteLine();
             Console.WriteLine("Кількість прийомів за видами тварин і днями тижня");
             Console.WriteLine();
 
+            int[] columnTotals = new int[cols]; // підсумки стовпців
+            int grandTotal = 0;                 // загальний підсумок
+
             // Шапка: до зовнішнього циклу
             Console.Write("{0,-12}", "Вид");
-            for (int c = 0; c < days.Length; c++)
+            for (int c = 0; c < cols; c++)
             {
                 Console.Write("{0,6}", days[c]);
             }
             Console.WriteLine("{0,8}", "Усього");
-            Console.WriteLine(new string('-', 12 + 6 * days.Length + 8));
+            Console.WriteLine(new string('-', 12 + 6 * cols + 8));
 
-            for (int r = 0; r < species.Length; r++)
+            for (int r = 0; r < rows; r++)
             {
                 int rowTotal = 0; // лічильник підсумку рядка: свій для кожного рядка
                 Console.Write("{0,-12}", species[r]);
 
-                for (int c = 0; c < days.Length; c++)
-                {,
+                for (int c = 0; c < cols; c++)
+                {
                     // кількість прийомів рахуємо за формулою
                     int visits = (r * 3 + c * 5) % 7 + 1;
 
                     Console.Write("{0,6}", visits);
                     rowTotal += visits;
+                    columnTotals[c] += visits;
                 }
 
                 Console.WriteLine("{0,8}", rowTotal); // перехід на новий рядок — після внутрішнього циклу
+                grandTotal += rowTotal;
             }
+
+            // Рядок підсумків під таблицею
+            Console.WriteLine(new string('-', 12 + 6 * cols + 8));
+            Console.Write("{0,-12}", "Усього");
+            for (int c = 0; c < cols; c++)
+            {
+                Console.Write("{0,6}", columnTotals[c]);
+            }
+            Console.WriteLine("{0,8}", grandTotal);
+        }
+
+        // Запитує кількість рядків чи стовпців. Повертає число від 1 до max
+        // або -1, якщо введено не число, нуль, від'ємне число чи забагато
+        static int ReadCount(string question, int max)
+        {
+            Console.Write($"{question} (від 1 до {max}): ");
+            string text = (Console.ReadLine() ?? "").Trim();
+
+            if (!int.TryParse(text, out int value))
+            {
+                Console.WriteLine("Помилка: потрібно ввести ціле число.");
+                return -1;
+            }
+            if (value <= 0)
+            {
+                Console.WriteLine("Помилка: число має бути більшим за нуль.");
+                return -1;
+            }
+            if (value > max)
+            {
+                Console.WriteLine($"Помилка: максимум — {max}.");
+                return -1;
+            }
+            return value;
         }
     }
 }
