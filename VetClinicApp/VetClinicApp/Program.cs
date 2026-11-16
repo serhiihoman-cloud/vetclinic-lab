@@ -5,6 +5,13 @@ namespace VetClinic
 {
     internal class Program
     {
+        // Ціни й довідкові масиви лежать одним місцем, щоб їх було легко змінити
+        const double ConsultationFee = 300.0; // вартість консультації, грн
+        const double MedicinePerKg = 12.5;    // вартість ліків за 1 кг ваги, грн
+
+        static string[] species = { "Собаки", "Коти", "Птахи", "Гризуни", "Рептилії" };
+        static string[] days = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд" };
+
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
@@ -76,16 +83,21 @@ namespace VetClinic
             Console.WriteLine("Поля довідника «Вид»: код (int), назва (string), чи активний (bool).");
         }
 
-        // Пункт 2: табулювання функції.
-        // x — вага тварини, кг; ліки = 12,5 грн за кг; прийом = консультація + ліки
+        // Пункт 2: меню лише викликає табулювання з потрібними межами
         static void ShowCostTable()
         {
-            const double ConsultationFee = 300.0; // вартість консультації, грн
-            const double MedicinePerKg = 12.5;    // вартість ліків за 1 кг ваги, грн
+            PrintCostTable(0.5, 5.0, 0.5);
+        }
 
-            double from = 0.5;  // початок проміжку
-            double to = 5.0;    // кінець проміжку
-            double step = 0.5;  // дробовий крок
+        // Табулювання: початок, кінець і крок приходять параметрами.
+        // Виводить таблицю, а ціну кожного рядка бере з методів-обчислювачів
+        static void PrintCostTable(double start, double end, double step)
+        {
+            if (step <= 0)
+            {
+                Console.WriteLine("Помилка: крок має бути більшим за нуль.");
+                return; // рання відмова: інакше цикл ніколи б не закінчився
+            }
 
             Console.WriteLine("Вартість прийому залежно від ваги тварини");
             Console.WriteLine();
@@ -93,25 +105,33 @@ namespace VetClinic
             Console.WriteLine(new string('-', 40));
 
             // + 1e-9 — запас на похибку дробових чисел, щоб не зникла остання стрічка
-            for (double x = from; x <= to + 1e-9; x += step)
+            for (double x = start; x <= end + 1e-9; x += step)
             {
-                double medicine = MedicinePerKg * x;
-                double total = ConsultationFee + medicine;
-                Console.WriteLine($"{x,10:F1}{medicine,14:F2}{total,16:F2}");
+                double medicine = CalculateMedicineCost(x, MedicinePerKg);
+                double total = CalculateVisitCost(ConsultationFee, medicine);
+                Console.WriteLine($"{x,10:F2}{medicine,14:F2}{total,16:F2}");
             }
         }
 
-        // Пункт 3: таблиця з двома входами (вид тварини × день тижня)
-        // з підсумком рядка, підсумком стовпця і загальним підсумком
+        // Рахує тільки вартість ліків і повертає її, нічого не виводить
+        static double CalculateMedicineCost(double weightKg, double pricePerKg)
+        {
+            return weightKg * pricePerKg;
+        }
+
+        // Вартість прийому = консультація + ліки. Теж лише повертає значення
+        static double CalculateVisitCost(double consultationFee, double medicineCost)
+        {
+            return consultationFee + medicineCost;
+        }
+
+        // Пункт 3: питає розміри таблиці й викликає виведення
         static void ShowVisitsTable()
         {
-            string[] species = { "Собаки", "Коти", "Птахи", "Гризуни", "Рептилії" };
-            string[] days = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд" };
-
             int rows = ReadCount("Скільки видів показати", species.Length);
             if (rows < 0)
             {
-                return; // помилку вже показано, повертаємось у меню, нічого не малюючи
+                return; // помилку вже показано, повертаємось у меню
             }
 
             int cols = ReadCount("Скільки днів показати", days.Length);
@@ -121,6 +141,19 @@ namespace VetClinic
             }
 
             Console.WriteLine();
+            PrintVisitsTable(rows, cols);
+        }
+
+        // Кількість прийомів для виду з номером speciesIndex у день dayIndex.
+        // Реальних даних ще немає (з'являться в роботі 10), тому рахуємо за формулою
+        static int CountVisits(int speciesIndex, int dayIndex)
+        {
+            return (speciesIndex * 3 + dayIndex * 5) % 7 + 1;
+        }
+
+        // Виводить таблицю «вид × день» з підсумками рядків, стовпців і загальним
+        static void PrintVisitsTable(int rows, int cols)
+        {
             Console.WriteLine("Кількість прийомів за видами тварин і днями тижня");
             Console.WriteLine();
 
@@ -143,8 +176,7 @@ namespace VetClinic
 
                 for (int c = 0; c < cols; c++)
                 {
-                    // кількість прийомів рахуємо за формулою
-                    int visits = (r * 3 + c * 5) % 7 + 1;
+                    int visits = CountVisits(r, c);
 
                     Console.Write("{0,6}", visits);
                     rowTotal += visits;
