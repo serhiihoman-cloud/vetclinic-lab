@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 
 namespace VetClinic
@@ -83,10 +84,15 @@ namespace VetClinic
             Console.WriteLine("Поля довідника «Вид»: код (int), назва (string), чи активний (bool).");
         }
 
-        // Пункт 2: меню лише викликає табулювання з потрібними межами
+        // Пункт 2: питає межі й крок, потім викликає табулювання
         static void ShowCostTable()
         {
-            PrintCostTable(0.5, 5.0, 0.5);
+            double start = ReadDouble("Початок проміжку ваги, кг", 0.1, 50);
+            double end = ReadDouble("Кінець проміжку ваги, кг", start, 50);
+            double step = ReadDouble("Крок, кг", 0.25, 10);
+
+            Console.WriteLine();
+            PrintCostTable(start, end, step);
         }
 
         // Табулювання: початок, кінець і крок приходять параметрами.
@@ -128,24 +134,15 @@ namespace VetClinic
         // Пункт 3: питає розміри таблиці й викликає виведення
         static void ShowVisitsTable()
         {
-            int rows = ReadCount("Скільки видів показати", species.Length);
-            if (rows < 0)
-            {
-                return; // помилку вже показано, повертаємось у меню
-            }
-
-            int cols = ReadCount("Скільки днів показати", days.Length);
-            if (cols < 0)
-            {
-                return;
-            }
+            int rows = ReadInt("Скільки видів показати", 1, species.Length);
+            int cols = ReadInt("Скільки днів показати", 1, days.Length);
 
             Console.WriteLine();
             PrintVisitsTable(rows, cols);
         }
 
         // Кількість прийомів для виду з номером speciesIndex у день dayIndex.
-        // Реальних даних ще немає (з'являться в роботі 10), тому рахуємо за формулою
+        // рахуємо за формулою
         static int CountVisits(int speciesIndex, int dayIndex)
         {
             return (speciesIndex * 3 + dayIndex * 5) % 7 + 1;
@@ -197,29 +194,51 @@ namespace VetClinic
             Console.WriteLine("{0,8}", grandTotal);
         }
 
-        // Запитує кількість рядків чи стовпців. Повертає число від 1 до max
-        // або -1, якщо введено не число, нуль, від'ємне число чи забагато
-        static int ReadCount(string question, int max)
+        // Питає ціле число, поки не отримає число з проміжку [min; max].
+        // Нічого не друкує, крім підказки й повідомлень про помилку
+        static int ReadInt(string prompt, int min, int max)
         {
-            Console.Write($"{question} (від 1 до {max}): ");
-            string text = (Console.ReadLine() ?? "").Trim();
+            while (true)
+            {
+                Console.Write($"{prompt} (від {min} до {max}): ");
+                string text = (Console.ReadLine() ?? "").Trim();
 
-            if (!int.TryParse(text, out int value))
-            {
-                Console.WriteLine("Помилка: потрібно ввести ціле число.");
-                return -1;
+                if (!int.TryParse(text, out int value))
+                {
+                    Console.WriteLine("Помилка: потрібно ввести ціле число.");
+                    continue;
+                }
+                if (value < min || value > max)
+                {
+                    Console.WriteLine($"Помилка: число має бути від {min} до {max}.");
+                    continue;
+                }
+                return value;
             }
-            if (value <= 0)
+        }
+
+        // Те саме для дробового числа. Приймає і кому, і крапку (0,5 та 0.5)
+        static double ReadDouble(string prompt, double min, double max)
+        {
+            while (true)
             {
-                Console.WriteLine("Помилка: число має бути більшим за нуль.");
-                return -1;
+                Console.Write($"{prompt} (від {min} до {max}): ");
+                string text = (Console.ReadLine() ?? "").Trim();
+
+                if (!double.TryParse(text.Replace(',', '.'), NumberStyles.Float,
+                                     CultureInfo.InvariantCulture, out double value)
+                    || double.IsNaN(value))
+                {
+                    Console.WriteLine("Помилка: потрібно ввести число.");
+                    continue;
+                }
+                if (value < min || value > max)
+                {
+                    Console.WriteLine($"Помилка: число має бути від {min} до {max}.");
+                    continue;
+                }
+                return value;
             }
-            if (value > max)
-            {
-                Console.WriteLine($"Помилка: максимум — {max}.");
-                return -1;
-            }
-            return value;
         }
     }
 }
