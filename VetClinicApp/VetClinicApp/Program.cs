@@ -6,17 +6,20 @@ namespace VetClinic
 {
     internal class Program
     {
-        // Ціни й довідкові масиви лежать одним місцем, щоб їх було легко змінити
+        // Сталі ціни (змінних у полях класу більше немає, дані передаються параметрами)
         const double ConsultationFee = 300.0; // вартість консультації, грн
         const double MedicinePerKg = 12.5;    // вартість ліків за 1 кг ваги, грн
-
-        static string[] species = { "Собаки", "Коти", "Птахи", "Гризуни", "Рептилії" };
-        static string[] days = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд" };
 
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             bool running = true;
+
+            // Дані живуть тут, у Main, і передаються в методи параметрами
+            string[] species = { "Собаки", "Коти", "Птахи", "Гризуни", "Рептилії" };
+            string[] days = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд" };
+            double[] costs = new double[100]; // вартості прийомів
+            int count = 0;                    // скільки елементів масиву зайнято
 
             while (running)
             {
@@ -28,7 +31,13 @@ namespace VetClinic
                 {
                     case "1": ShowAbout(); Pause(); break;
                     case "2": ShowCostTable(); Pause(); break;
-                    case "3": ShowVisitsTable(); Pause(); break;
+                    case "3": ShowVisitsTable(species, days); Pause(); break;
+                    case "4":
+                        AddValue(costs, ref count, ReadDouble("Вартість прийому, грн", 0, 100000), costs.Length);
+                        Console.WriteLine($"Записів у списку: {count}");
+                        Pause();
+                        break;
+                    case "5": PrintValues(costs, count); Pause(); break;
                     case "0": running = false; break;
                     default: ShowUnknownChoice(); Pause(); break;
                 }
@@ -44,6 +53,8 @@ namespace VetClinic
             Console.WriteLine("1 — довідка про застосунок");
             Console.WriteLine("2 — вартість прийому залежно від ваги тварини");
             Console.WriteLine("3 — прийоми за видами тварин і днями тижня");
+            Console.WriteLine("4 — додати вартість прийому");
+            Console.WriteLine("5 — показати вартості прийомів");
             Console.WriteLine("0 — вихід");
             Console.Write("Ваш вибір: ");
         }
@@ -132,13 +143,13 @@ namespace VetClinic
         }
 
         // Пункт 3: питає розміри таблиці й викликає виведення
-        static void ShowVisitsTable()
+        static void ShowVisitsTable(string[] species, string[] days)
         {
             int rows = ReadInt("Скільки видів показати", 1, species.Length);
             int cols = ReadInt("Скільки днів показати", 1, days.Length);
 
             Console.WriteLine();
-            PrintVisitsTable(rows, cols);
+            PrintVisitsTable(species, days, rows, cols);
         }
 
         // Кількість прийомів для виду з номером speciesIndex у день dayIndex.
@@ -149,7 +160,7 @@ namespace VetClinic
         }
 
         // Виводить таблицю «вид × день» з підсумками рядків, стовпців і загальним
-        static void PrintVisitsTable(int rows, int cols)
+        static void PrintVisitsTable(string[] species, string[] days, int rows, int cols)
         {
             Console.WriteLine("Кількість прийомів за видами тварин і днями тижня");
             Console.WriteLine();
@@ -192,6 +203,40 @@ namespace VetClinic
                 Console.Write("{0,6}", columnTotals[c]);
             }
             Console.WriteLine("{0,8}", grandTotal);
+        }
+
+        // Додає значення в кінець масиву. Масив іде без ref (він і так посилальний),
+        // а лічильник — із ref, бо int інакше передався б копією
+        static void AddValue(double[] values, ref int count, double newValue, int capacity)
+        {
+            if (count == capacity)
+            {
+                Console.WriteLine("Місця більше немає.");
+                return;
+            }
+
+            values[count] = newValue;
+            count++; // змінюється лічильник у Main
+        }
+
+        // Виводить перші count елементів таблицею з номерами. З клавіатури нічого не читає
+        static void PrintValues(double[] values, int count)
+        {
+            if (count == 0)
+            {
+                Console.WriteLine("Список порожній.");
+                return;
+            }
+
+            Console.WriteLine("Вартості прийомів");
+            Console.WriteLine();
+            Console.WriteLine("{0,4}{1,16}", "№", "Вартість, грн");
+            Console.WriteLine(new string('-', 20));
+
+            for (int i = 0; i < count; i++)
+            {
+                Console.WriteLine($"{i + 1,4}{values[i],16:F2}");
+            }
         }
 
         // Питає ціле число, поки не отримає число з проміжку [min; max].
