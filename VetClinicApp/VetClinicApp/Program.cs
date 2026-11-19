@@ -38,6 +38,8 @@ namespace VetClinic
                         Pause();
                         break;
                     case "5": PrintValues(costs, count); Pause(); break;
+                    case "6": ShowStatistics(costs, count); Pause(); break;
+                    case "7": ShowReferenceDemo(); Pause(); break;
                     case "0": running = false; break;
                     default: ShowUnknownChoice(); Pause(); break;
                 }
@@ -55,6 +57,8 @@ namespace VetClinic
             Console.WriteLine("3 — прийоми за видами тварин і днями тижня");
             Console.WriteLine("4 — додати вартість прийому");
             Console.WriteLine("5 — показати вартості прийомів");
+            Console.WriteLine("6 — статистика вартостей");
+            Console.WriteLine("7 — дослід: значиме і посилальне");
             Console.WriteLine("0 — вихід");
             Console.Write("Ваш вибір: ");
         }
@@ -237,6 +241,93 @@ namespace VetClinic
             {
                 Console.WriteLine($"{i + 1,4}{values[i],16:F2}");
             }
+        }
+
+        // Шукає найбільше значення й його номер (з 1, як у таблиці).
+        // Два результати віддаються через out. Повертає false для порожнього набору
+        static bool TryFindMax(double[] values, int count, out double max, out int maxNumber)
+        {
+            if (count == 0)
+            {
+                max = 0; // out-параметри треба присвоїти в кожній гілці
+                maxNumber = 0;
+                return false;
+            }
+
+            max = values[0];
+            maxNumber = 1;
+
+            for (int i = 1; i < count; i++)
+            {
+                if (values[i] > max)
+                {
+                    max = values[i];
+                    maxNumber = i + 1;
+                }
+            }
+
+            return true;
+        }
+
+        // Сума й середнє через out. Перевірка count > 0 захищає від ділення на нуль
+        static void Statistics(double[] values, int count, out double sum, out double average)
+        {
+            sum = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                sum += values[i];
+            }
+
+            average = count > 0 ? sum / count : 0;
+        }
+
+        // Пункт «статистика»: використовує обидва методи вище й виводить результат
+        static void ShowStatistics(double[] values, int count)
+        {
+            if (!TryFindMax(values, count, out double max, out int maxNumber))
+            {
+                Console.WriteLine("Список порожній, статистики немає.");
+                return;
+            }
+
+            Statistics(values, count, out double sum, out double average);
+
+            Console.WriteLine($"Записів:          {count}");
+            Console.WriteLine($"Сума:             {sum:F2} грн");
+            Console.WriteLine($"Середня вартість: {average:F2} грн");
+            Console.WriteLine($"Найдорожчий:      {max:F2} грн (запис №{maxNumber})");
+        }
+
+        // Спроба змінити int без ref: змінюється лише копія всередині методу
+        static void IncreaseInt(int value)
+        {
+            value = value + 100;
+        }
+
+        // Зміна елемента масиву: масив передається посиланням, тому зміна видна в Main
+        static void IncreaseFirst(double[] prices)
+        {
+            prices[0] = prices[0] + 100;
+        }
+
+        // Дослід для звіту: вивід до й після виклику обох методів
+        static void ShowReferenceDemo()
+        {
+            int price = 50;
+            double[] prices = { 50, 70, 90 };
+
+            Console.WriteLine("Дослід: значиме проти посилального");
+            Console.WriteLine();
+            Console.WriteLine($"До виклику:    price = {price}, prices[0] = {prices[0]}");
+
+            IncreaseInt(price);
+            IncreaseFirst(prices);
+
+            Console.WriteLine($"Після виклику: price = {price}, prices[0] = {prices[0]}");
+            Console.WriteLine();
+            Console.WriteLine("int передався копією, тому зміна всередині методу зникла.");
+            Console.WriteLine("Масив передався посиланням, тому змінився сам елемент масиву.");
         }
 
         // Питає ціле число, поки не отримає число з проміжку [min; max].
