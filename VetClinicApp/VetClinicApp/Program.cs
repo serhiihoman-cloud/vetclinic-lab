@@ -40,6 +40,11 @@ namespace VetClinic
                     case "5": PrintValues(costs, count); Pause(); break;
                     case "6": ShowStatistics(costs, count); Pause(); break;
                     case "7": ShowReferenceDemo(); Pause(); break;
+                    case "8":
+                        RemoveAt(costs, ref count, ReadInt("Номер запису для видалення", 1, costs.Length) - 1);
+                        Console.WriteLine($"Записів у списку: {count}");
+                        Pause();
+                        break;
                     case "0": running = false; break;
                     default: ShowUnknownChoice(); Pause(); break;
                 }
@@ -59,6 +64,7 @@ namespace VetClinic
             Console.WriteLine("5 — показати вартості прийомів");
             Console.WriteLine("6 — статистика вартостей");
             Console.WriteLine("7 — дослід: значиме і посилальне");
+            Console.WriteLine("8 — видалити вартість за номером");
             Console.WriteLine("0 — вихід");
             Console.Write("Ваш вибір: ");
         }
@@ -328,6 +334,25 @@ namespace VetClinic
             Console.WriteLine();
             Console.WriteLine("int передався копією, тому зміна всередині методу зникла.");
             Console.WriteLine("Масив передався посиланням, тому змінився сам елемент масиву.");
+        }
+
+        // Видаляє елемент з індексом index (з 0), зсуваючи решту вліво.
+        // Лічильник іде з ref: він зменшується в Main. Неправильний номер — повідомлення й вихід
+        static void RemoveAt(double[] values, ref int count, int index)
+        {
+            if (index < 0 || index >= count)
+            {
+                Console.WriteLine("Помилка: запису з таким номером немає.");
+                return;
+            }
+
+            for (int i = index; i < count - 1; i++)
+            {
+                values[i] = values[i + 1];
+            }
+
+            count--;
+            values[count] = 0; // прибираємо «хвіст», що лишився після зсуву
         }
 
         // Питає ціле число, поки не отримає число з проміжку [min; max].
